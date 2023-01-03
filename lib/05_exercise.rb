@@ -3,6 +3,7 @@ class DiaryEntry
         # title, contents are strings
         @title = title
         @contents = contents
+        @bookmark = 0
     end
   
     def title
@@ -24,7 +25,8 @@ class DiaryEntry
     # wpm is an integer representing the number of words the user can read per minute
     # Returns an integer representing an estimate of the reading time in minutes
     # for the contents at the given wpm.
-        return @contents.split(" ").size / wpm
+      fail "Reading speed must be above zero" unless wpm.positive?
+      return (count_words / wpm.to_f).ceil
     end
   
     def reading_chunk(wpm, minutes) 
@@ -35,21 +37,24 @@ class DiaryEntry
     # If called again, `reading_chunk` should return the next chunk, skipping
     # what has already been read, until the contents is fully read.
     # The next call after that it should restart from the beginning.
+    fail "Reading speed must be above zero" unless wpm > 0
+    fail "Minutes to read must be above zero" unless minutes > 0
+
     chunk_size = minutes * wpm
-    text_chunk = @contents.split(" ")
+    start_from = @bookmark
+    end_at = @bookmark + chunk_size
+    word_list =  words[start_from, end_at]
+    
+    if end_at >= count_words
+      @bookmark = 0
+    else
+    @bookmark = end_at
+    end
+    return word_list.join(" ")
+    end
 
-    bookmark = 0
-    book_remaining = count_words
-
-        while book_remaining >= chunk_size do
-        puts text_chunk[bookmark..(bookmark + (chunk_size - 1))].join(" ") 
-        book_remaining -= (bookmark + chunk_size)
-        bookmark += chunk_size
-        end
-        puts text_chunk[bookmark..-1].join(' ')
-        bookmark = 0
+    private
+    def words
+      return @contents.split(" ")
     end
 end
-
-diaryentry = DiaryEntry.new("one", (1..100).to_a.join(", "))
-diaryentry.reading_chunk(5,15)
